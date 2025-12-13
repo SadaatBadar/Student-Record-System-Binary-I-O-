@@ -12,33 +12,44 @@ struct Student {
     string address;
 };
 
-Student students[50]; // Array to store student records
-int totalStudents = 0; // Total number of students
+Student students[50];
+int totalStudents = 0;
+
+/* ---------- Utility Functions ---------- */
+
+bool rollExists(int roll) {
+    for (int i = 0; i < totalStudents; i++) {
+        if (students[i].rollNo == roll)
+            return true;
+    }
+    return false;
+}
+
+/* ---------- File Handling ---------- */
 
 void saveToFile() {
-    ofstream outFile("student_records.txt"); // Open file for writing
+    ofstream outFile("student_records.txt");
     if (!outFile) {
-        cout << "Error opening file for writing\n";
+        cout << "Error saving data!\n";
         return;
     }
+
     for (int i = 0; i < totalStudents; i++) {
-        outFile << students[i].rollNo << "\n";
-        outFile << students[i].name << "\n";
-        outFile << students[i].fatherName << "\n";
-        outFile << students[i].mobile << "\n";
-        outFile << students[i].dob << "\n";
-        outFile << students[i].address << "\n";
+        outFile << students[i].rollNo << "\n"
+                << students[i].name << "\n"
+                << students[i].fatherName << "\n"
+                << students[i].mobile << "\n"
+                << students[i].dob << "\n"
+                << students[i].address << "\n";
     }
     outFile.close();
-    cout << "Student records saved to file.\n";
 }
 
 void loadFromFile() {
-    ifstream inFile("student_records.txt"); // Open file for reading
-    if (!inFile) {
-        cout << "Error opening file for reading.\n";
+    ifstream inFile("student_records.txt");
+    if (!inFile)
         return;
-    }
+
     totalStudents = 0;
     while (inFile >> students[totalStudents].rollNo) {
         inFile.ignore();
@@ -50,136 +61,159 @@ void loadFromFile() {
         totalStudents++;
     }
     inFile.close();
-    cout << "Student records loaded successfully.\n";
 }
 
+/* ---------- CRUD Operations ---------- */
+
 void addStudent() {
-    cout << "Enter student details:\n";
-    cout << "Roll No: ";
-    cin >> students[totalStudents].rollNo;
-    cin.ignore(); // Clear newline character from buffer
+    if (totalStudents >= 50) {
+        cout << "Student limit reached!\n";
+        return;
+    }
+
+    int roll;
+    cout << "Enter Roll No: ";
+    cin >> roll;
+
+    if (rollExists(roll)) {
+        cout << "Roll number already exists!\n";
+        return;
+    }
+
+    students[totalStudents].rollNo = roll;
+    cin.ignore();
+
     cout << "Name: ";
     getline(cin, students[totalStudents].name);
+
     cout << "Father's Name: ";
     getline(cin, students[totalStudents].fatherName);
-    cout << "Mobile: ";
+
+    cout << "Mobile (10 digits): ";
     getline(cin, students[totalStudents].mobile);
+
     cout << "Date of Birth (DD/MM/YYYY): ";
     getline(cin, students[totalStudents].dob);
+
     cout << "Address: ";
     getline(cin, students[totalStudents].address);
 
     totalStudents++;
+    saveToFile();
     cout << "Student added successfully!\n";
 }
 
 void displayStudent() {
     int roll;
-    cout << "Enter roll number to display details: ";
+    cout << "Enter Roll No: ";
     cin >> roll;
 
     for (int i = 0; i < totalStudents; i++) {
         if (students[i].rollNo == roll) {
-            cout << "Student Details:\n";
+            cout << "\nStudent Details\n";
             cout << "Roll No: " << students[i].rollNo << "\n";
             cout << "Name: " << students[i].name << "\n";
-            cout << "Father's Name: " << students[i].fatherName << "\n";
+            cout << "Father: " << students[i].fatherName << "\n";
             cout << "Mobile: " << students[i].mobile << "\n";
-            cout << "Date of Birth: " << students[i].dob << "\n";
+            cout << "DOB: " << students[i].dob << "\n";
             cout << "Address: " << students[i].address << "\n";
             return;
         }
     }
-    cout << "Student with Roll No " << roll << " not found.\n";
+    cout << "Student not found!\n";
+}
+
+void displayAllStudents() {
+    if (totalStudents == 0) {
+        cout << "No records found.\n";
+        return;
+    }
+
+    cout << "\n---- Student List ----\n";
+    for (int i = 0; i < totalStudents; i++) {
+        cout << "Roll: " << students[i].rollNo
+             << " | Name: " << students[i].name
+             << " | Mobile: " << students[i].mobile << "\n";
+    }
 }
 
 void editStudent() {
     int roll;
-    cout << "Enter Roll No of the student to edit: ";
+    cout << "Enter Roll No to edit: ";
     cin >> roll;
-    cin.ignore(); // Clear newline character from buffer
+    cin.ignore();
 
     for (int i = 0; i < totalStudents; i++) {
         if (students[i].rollNo == roll) {
-            cout << "Enter new name: ";
+            cout << "New Name: ";
             getline(cin, students[i].name);
-            cout << "Enter new father's name: ";
+
+            cout << "New Father's Name: ";
             getline(cin, students[i].fatherName);
-            cout << "Enter new mobile number: ";
+
+            cout << "New Mobile: ";
             getline(cin, students[i].mobile);
-            cout << "Enter new date of birth (DD/MM/YYYY): ";
+
+            cout << "New DOB: ";
             getline(cin, students[i].dob);
-            cout << "Enter new address: ";
+
+            cout << "New Address: ";
             getline(cin, students[i].address);
 
-            cout << "Student details updated successfully!\n";
+            saveToFile();
+            cout << "Student updated successfully!\n";
             return;
         }
     }
-    cout << "Student with Roll No " << roll << " not found.\n";
+    cout << "Student not found!\n";
 }
-  
-    void deleteStudent(){
-        int roll;
-        cout<<"Enter roll number: ";
-        cin>>roll;
-        cin.ignore();
-        
-        int indexToDelete = -1;
+
+void deleteStudent() {
+    int roll;
+    cout << "Enter Roll No to delete: ";
+    cin >> roll;
+
     for (int i = 0; i < totalStudents; i++) {
         if (students[i].rollNo == roll) {
-            indexToDelete = i;
-            break;
+            for (int j = i; j < totalStudents - 1; j++) {
+                students[j] = students[j + 1];
+            }
+            totalStudents--;
+            saveToFile();
+            cout << "Student deleted successfully!\n";
+            return;
         }
     }
-    if (indexToDelete == -1) {
-        cout << "No student found with Roll Number " << roll << ". Please check and try again.\n";
-        return;
- }
-  // Shift all students after the deleted student one position up
-    for (int i = indexToDelete; i < totalStudents - 1; i++) {
-        students[i] = students[i + 1];
-    }
-
-    totalStudents--;
-    cout << "Student with Roll Number " << roll << " has been deleted successfully!\n";
+    cout << "Student not found!\n";
 }
 
+/* ---------- Main ---------- */
+
 int main() {
-    int choice;
     loadFromFile();
-    while (true) {
-        cout << "\nStudent Management System\n";
+    int choice;
+
+    do {
+        cout << "\n===== Student Management System =====\n";
         cout << "1. Add Student\n";
-        cout << "2. Display Student Details\n";
-        cout << "3. Edit Student Details\n";
-        cout << "4. Exit\n";
-        cout << "Enter your choice: ";
+        cout << "2. Display Student\n";
+        cout << "3. Display All Students\n";
+        cout << "4. Edit Student\n";
+        cout << "5. Delete Student\n";
+        cout << "6. Exit\n";
+        cout << "Enter choice: ";
         cin >> choice;
-        cin.ignore(); // Clear newline character from buffer
 
         switch (choice) {
-            case 1:
-                addStudent();
-                saveToFile();
-                break;
-            case 2:
-                displayStudent();
-                break;
-            case 3:
-                editStudent();
-                saveToFile(); // Save changes after editing
-                break;
-            case 4:
-                deleteStudent();
-                saveToFile(); // Save changes after deleting
-                break;
-            case 5:
-                cout << "Exiting program. Goodbye!\n";
-                return 0;
-            default:
-                cout << "Invalid choice. Try again.\n";
+            case 1: addStudent(); break;
+            case 2: displayStudent(); break;
+            case 3: displayAllStudents(); break;
+            case 4: editStudent(); break;
+            case 5: deleteStudent(); break;
+            case 6: cout << "Exiting...\n"; break;
+            default: cout << "Invalid choice!\n";
         }
-    }
+    } while (choice != 6);
+
     return 0;
 }
