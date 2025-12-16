@@ -1,15 +1,16 @@
 #include <iostream>
 #include <fstream>
-#include <string>
+#include <cstring> // Required for string manipulation if needed
 using namespace std;
 
+// UPGRADE 1: Fixed-size arrays for Binary Compatibility
 struct Student {
     int rollNo;
-    string name;
-    string fatherName;
-    string mobile;
-    string dob;
-    string address;
+    char name[50];
+    char fatherName[50];
+    char mobile[15];
+    char dob[15];
+    char address[100];
 };
 
 Student students[50];
@@ -25,40 +26,38 @@ bool rollExists(int roll) {
     return false;
 }
 
-/* ---------- File Handling ---------- */
+/* ---------- File Handling (BINARY UPGRADE) ---------- */
 
 void saveToFile() {
-    ofstream outFile("student_records.txt");
+    // Open in Binary Mode
+    ofstream outFile("student_records.dat", ios::binary); 
     if (!outFile) {
         cout << "Error saving data!\n";
         return;
     }
 
+    // Write the entire array from memory to disk in one go (or loop)
+    // Looping ensures we only write valid students
     for (int i = 0; i < totalStudents; i++) {
-        outFile << students[i].rollNo << "\n"
-                << students[i].name << "\n"
-                << students[i].fatherName << "\n"
-                << students[i].mobile << "\n"
-                << students[i].dob << "\n"
-                << students[i].address << "\n";
+        outFile.write(reinterpret_cast<char*>(&students[i]), sizeof(Student));
     }
     outFile.close();
 }
 
 void loadFromFile() {
-    ifstream inFile("student_records.txt");
+    ifstream inFile("student_records.dat", ios::binary);
     if (!inFile)
         return;
 
     totalStudents = 0;
-    while (inFile >> students[totalStudents].rollNo) {
-        inFile.ignore();
-        getline(inFile, students[totalStudents].name);
-        getline(inFile, students[totalStudents].fatherName);
-        getline(inFile, students[totalStudents].mobile);
-        getline(inFile, students[totalStudents].dob);
-        getline(inFile, students[totalStudents].address);
-        totalStudents++;
+    Student temp;
+    
+    // Read raw bytes directly into the temp struct
+    while (inFile.read(reinterpret_cast<char*>(&temp), sizeof(Student))) {
+        if(totalStudents < 50) {
+            students[totalStudents] = temp;
+            totalStudents++;
+        }
     }
     inFile.close();
 }
@@ -81,22 +80,23 @@ void addStudent() {
     }
 
     students[totalStudents].rollNo = roll;
-    cin.ignore();
+    cin.ignore(); // Clear buffer
 
+    // UPGRADE 3: Safe Input for Char Arrays
     cout << "Name: ";
-    getline(cin, students[totalStudents].name);
+    cin.getline(students[totalStudents].name, 50);
 
     cout << "Father's Name: ";
-    getline(cin, students[totalStudents].fatherName);
+    cin.getline(students[totalStudents].fatherName, 50);
 
     cout << "Mobile (10 digits): ";
-    getline(cin, students[totalStudents].mobile);
+    cin.getline(students[totalStudents].mobile, 15);
 
     cout << "Date of Birth (DD/MM/YYYY): ";
-    getline(cin, students[totalStudents].dob);
+    cin.getline(students[totalStudents].dob, 15);
 
     cout << "Address: ";
-    getline(cin, students[totalStudents].address);
+    cin.getline(students[totalStudents].address, 100);
 
     totalStudents++;
     saveToFile();
@@ -145,20 +145,21 @@ void editStudent() {
 
     for (int i = 0; i < totalStudents; i++) {
         if (students[i].rollNo == roll) {
+            // Using cin.getline for safety here too
             cout << "New Name: ";
-            getline(cin, students[i].name);
+            cin.getline(students[i].name, 50);
 
             cout << "New Father's Name: ";
-            getline(cin, students[i].fatherName);
+            cin.getline(students[i].fatherName, 50);
 
             cout << "New Mobile: ";
-            getline(cin, students[i].mobile);
+            cin.getline(students[i].mobile, 15);
 
             cout << "New DOB: ";
-            getline(cin, students[i].dob);
+            cin.getline(students[i].dob, 15);
 
             cout << "New Address: ";
-            getline(cin, students[i].address);
+            cin.getline(students[i].address, 100);
 
             saveToFile();
             cout << "Student updated successfully!\n";
@@ -190,11 +191,11 @@ void deleteStudent() {
 /* ---------- Main ---------- */
 
 int main() {
-    loadFromFile();
+    loadFromFile(); // Auto-load binary data on start
     int choice;
 
     do {
-        cout << "\n===== Student Management System =====\n";
+        cout << "\n===== High-Performance Student System =====\n";
         cout << "1. Add Student\n";
         cout << "2. Display Student\n";
         cout << "3. Display All Students\n";
